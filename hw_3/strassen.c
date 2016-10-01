@@ -37,7 +37,7 @@ int **B_12;
 int **B_21;
 int **B_22;
 
-/* B Matrices needed for Strassen Algorithm */
+/* C Matrices needed for Strassen Algorithm */
 int **C_11;
 int **C_12;
 int **C_21;
@@ -137,29 +137,150 @@ void simpleMM(int N) {
   }
 }
 
-void matrix_add(int ***T_1, int **T_2, int dim)
+void matrix_mult(int **M_1, int **M_2, int ***D, int dim)
+{
+    int i;
+    int j;
+    int k;
+
+    for (i = 0; i < dim; i++) {
+        for (j = 0; j < dim; j++) {
+            for (k = 0; k < dim; k++) {
+                (*D)[i][j] += M_1[i][k] * M_2[k][j];
+            }
+        }
+    }
+}
+
+void matrix_add(int **T_1, int **T_2, int ***D, int dim)
 {
     int i;
     int j;
 
     for(i = 0; i < dim; i++) {
         for (j = 0; j < dim; j++) {
-            (*T_1)[i][j] = (*T_1)[i][j] + T_2[i][j];
+            (*D)[i][j] = T_1[i][j] + T_2[i][j];
         }
     }
 }
 
-void matrix_sub(int ***T_1, int **T_2, int dim)
+void matrix_sub(int **T_1, int **T_2, int ***D, int dim)
 {
     int i;
     int j;
 
     for(i = 0; i < dim; i++) {
         for (j = 0; j < dim; j++) {
-            (*T_1)[i][j] = (*T_1)[i][j] - T_2[i][j];
+            (*D)[i][j] = T_1[i][j] - T_2[i][j];
         }
     }
 }
+
+void strassen_allocate(int dim)
+{
+    M_1 = allocMatrix(dim);
+    M_2 = allocMatrix(dim);
+    M_3 = allocMatrix(dim);
+    M_4 = allocMatrix(dim);
+    M_5 = allocMatrix(dim);
+    M_6 = allocMatrix(dim);
+    M_7 = allocMatrix(dim);
+
+    C_11 = allocMatrix(dim);
+    C_12 = allocMatrix(dim);
+    C_21 = allocMatrix(dim);
+    C_22 = allocMatrix(dim);
+}
+
+void calc_M1(int **A_11, int **A_22, int **B_11, int **B_22, int ***D, int dim)
+{
+
+    int **T_1;
+    int **T_2;
+
+    T_1 = allocMatrix(dim);
+    T_2 = allocMatrix(dim);
+    
+    matrix_add(A_11, A_22, &T_1, dim);
+    matrix_add(B_11, B_22, &T_2, dim);
+
+    matrix_mult(T_1, T_2, D, dim);
+}
+
+void calc_M2(int **A_21, int **A_22, int **B_11, int ***D, int dim)
+{
+    
+    int **T_1;
+    
+    T_1 = allocMatrix(dim);
+    
+    matrix_add(A_21, A_22, &T_1, dim);
+    matrix_mult(T_1, B_11, D, dim); 
+}
+
+void calc_M3(int **A_11, int **B_12, int **B_22, int ***D, int dim)
+{
+
+    int **T_1;
+
+    T_1 = allocMatrix(dim);
+
+    matrix_sub(B_12, B_22, &T_1, dim);
+    matrix_mult(A_11, T_1, D, dim);
+}
+
+void calc_M4(int **A_22, int **B_21, int **B_11, int ***D, int dim)
+{
+    
+    int **T_1;
+    
+    T_1 = allocMatrix(dim);
+    
+    matrix_sub(B_21, B_11, &T_1, dim);
+    matrix_mult(A_22, T_1, D, dim);    
+}
+
+
+void calc_M5(int **A_11, int **A_12, int **B_22, int ***D, int dim)
+{
+    int **T_1;
+    
+    T_1 = allocMatrix(dim);
+    
+    matrix_add(A_11, A_12, &T_1, dim);
+    matrix_mult(T_1, B_22, D, dim);
+}
+
+void calc_M6(int **A_21, int **A_11, int **B_11, int **B_12, int ***D, int dim)
+{
+    int **T_1;
+    int **T_2;
+    
+    T_1 = allocMatrix(dim);
+    T_2 = allocMatrix(dim); 
+    
+    matrix_sub(A_21, A_11, &T_1, dim);
+    matrix_add(B_11, B_12, &T_2, dim);
+    matrix_mult(T_1, T_2, D, dim); 
+}
+void calc_M7(int **A_12, int **A_22, int **B_21, int **B_22, int ***D, int dim)
+{
+    int **T_1;
+    int **T_2;
+
+    T_1 = allocMatrix(dim);
+    T_2 = allocMatrix(dim);
+
+    matrix_sub(A_12, A_22, &T_1, dim);
+    matrix_add(B_21, B_22, &T_2, dim);
+    matrix_mult(T_1, T_2, D, dim);
+}
+
+void calc_C11(int **M_1, int **M_4, int **M_5, int **M_7){}
+void calc_C12(int **M_3, int **M_5){}
+void calc_C21(int **M_2, int **M_4){}
+void calc_C22(int **M_1, int **M_2, int **M_3, int **M_6){}
+
 
 // WRITE YOUR CODE HERE, you will need to also add functions for each
 // of the sub-matrixes you will need to calculate but you can create your
@@ -173,20 +294,30 @@ void strassenMM(int N) {
         new_size = compute_next_power_two(N);
     } 
     
-    padded_split(A,N, new_size, 0);    
-
-    printf("%d\n", A_11[1][1]);
-
-    printf("A_11\n"); 
-    printMatrix(A_11,new_size/2);
+    strassen_allocate(new_size/2); 
+   
+    padded_split(A,N,new_size,0);
+    padded_split(B,N,new_size,1);
     
-    printf("A_12\n"); 
-    printMatrix(A_12,new_size/2);
+    printf("A_11\n");
+    printMatrix(A_11, new_size/2);
+     
+    
+    printf("\n\nA_22\n");
+    printMatrix(A_22, new_size/2);
+    
+    printf("\n\nB_11\n");
+    printMatrix(B_11, new_size/2);
+    
+    printf("\n\nB_22\n"); 
+    printMatrix(B_22, new_size/2);
+   
+    calc_M1(A_11, A_22, B_11, B_22, &M_1, new_size/2); 
 
-    matrix_add(&A_11, A_12, new_size/2);
-
-    printf("A_11\n"); 
-    printMatrix(A_11,new_size/2);
+    printf("\n\nM_1\n");
+    printMatrix(M_1, new_size/2);
+    
+    
 
 /*   printMatrix(A,N);
     
@@ -201,7 +332,6 @@ void strassenMM(int N) {
     printMatrix(A_22,new_size/2);
 */
 
-    padded_split(B,N,new_size,1);
 /*    printMatrix(B,N);
     
     printf("B_11\n"); 
