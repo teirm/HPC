@@ -7,8 +7,10 @@
  * Implement Pthreads version of Strassen algorithm for matrix multiplication.
  */
 
+#include "strassen.h"
 #include "timer.h"
 #include "io.h"
+
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,6 +52,83 @@ int **M_5;
 int **M_6;
 int **M_7;
 
+/* Checks if the matrix dimensions are a power of 2 */
+int is_power_two(int val)
+{
+    return (val != 0) && ((val & (val-1)) == 0);
+}
+
+int compute_next_power_two(int val)
+{
+    int next_power_two;
+
+    next_power_two = 1;
+
+    while (next_power_two < val) {
+        next_power_two = next_power_two << 1;
+    }
+
+    return next_power_two;
+}
+
+void padded_split(int **M, int N, int padded_size, int m_pos)
+{
+
+    int i;
+    int j;
+
+    if (m_pos == 0) {
+        A_11 = allocMatrix(padded_size/2);
+        A_12 = allocMatrix(padded_size/2);
+        A_21 = allocMatrix(padded_size/2);
+        A_22 = allocMatrix(padded_size/2); 
+        
+        for (i = 0; i < N; i++) {
+            for (j = 0; j < N; j++) {
+                if (i < padded_size/2 && j < padded_size/2) {
+                    printf("%d %d\n", i, j);
+                    A_11[i][j] = M[i][j];
+                } else if (i >= padded_size/2 && j < padded_size/2) {
+                    printf("%d %d\n", i - padded_size/2, j);
+                    A_21[i - padded_size/2][j] = M[i][j];
+                } else if (i < padded_size/2 && j >= padded_size/2) {
+                    printf("%d %d\n", i, j - padded_size/2);
+                    A_12[i][j - padded_size/2] = M[i][j];
+                } else { 
+                    printf("%d %d\n", i - padded_size/2, j - padded_size/2);
+                    A_22[i - padded_size/2][j - padded_size/2] = M[i][j];
+                }
+            }
+        }
+
+    } else {
+        B_11 = allocMatrix(padded_size/2);
+        B_12 = allocMatrix(padded_size/2);
+        B_21 = allocMatrix(padded_size/2);
+        B_22 = allocMatrix(padded_size/2); 
+        
+        for (i = 0; i < N; i++) {
+            for (j = 0; j < N; j++) {
+                if (i < padded_size/2 && j < padded_size/2) {
+                    printf("%d %d\n", i, j);
+                    B_11[i][j] = M[i][j];
+                } else if (i >= padded_size/2 && j < padded_size/2) {
+                    printf("%d %d\n", i - padded_size/2, j);
+                    B_21[i - padded_size/2][j] = M[i][j];
+                } else if (i < padded_size/2 && j >= padded_size/2) {
+                    printf("%d %d\n", i, j - padded_size/2);
+                    B_12[i][j - padded_size/2] = M[i][j];
+                } else { 
+                    printf("%d %d\n", i - padded_size/2, j - padded_size/2);
+                    B_22[i - padded_size/2][j - padded_size/2] = M[i][j];
+                }
+            }
+        }
+    }
+
+    printf("Split and Padding done\n");
+}
+
 // Stupid simple Matrix Multiplication, meant as example.
 void simpleMM(int N) {
   for (int i=0; i<N; i++) {
@@ -65,6 +144,45 @@ void simpleMM(int N) {
 // of the sub-matrixes you will need to calculate but you can create your
 // threads in this fucntion.
 void strassenMM(int N) {
+    
+    int new_size; 
+    new_size = N; 
+   
+    if (is_power_two(N) == 0) {
+        new_size = compute_next_power_two(N);
+    } 
+    
+    padded_split(A,N, new_size, 0);    
+    printMatrix(A,N);
+    
+    printf("A_11\n"); 
+    printMatrix(A_11,new_size/2);
+    
+    printf("A_12\n"); 
+    printMatrix(A_12,new_size/2);
+    
+    printf("A_21\n"); 
+    printMatrix(A_21,new_size/2);
+    
+    printf("A_22\n"); 
+    printMatrix(A_22,new_size/2);
+
+    padded_split(B,N,new_size,1);
+    printMatrix(B,N);
+    
+    printf("B_11\n"); 
+    printMatrix(B_11,new_size/2);
+    
+    printf("B_12\n"); 
+    printMatrix(B_12,new_size/2);
+    
+    printf("B_21\n"); 
+    printMatrix(B_21,new_size/2);
+    
+    printf("B_22\n"); 
+    printMatrix(B_22,new_size/2);
+
+
 }
 
 // Allocate square matrix.
@@ -136,6 +254,7 @@ int main(int argc, char* argv[]) {
   strassenMM(N);
   printf("Strassen MM took %ld ms\n", timerStop());
 
+/* NOTE: Commented out for debugging purposes
   if (compareMatrix(C, R, N) != 0) {
     if (N < 20) {
       printf("\n\n------- MATRIX C\n");
@@ -145,7 +264,7 @@ int main(int argc, char* argv[]) {
     }
     printf("Matrix C doesn't match Matrix R, if N < 20 they will be printed above.\n");
   }
-
+*/
   // stopping timer
   
   cleanup();
