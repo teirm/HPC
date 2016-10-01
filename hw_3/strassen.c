@@ -276,10 +276,28 @@ void calc_M7(int **A_12, int **A_22, int **B_21, int **B_22, int ***D, int dim)
     matrix_mult(T_1, T_2, D, dim);
 }
 
-void calc_C11(int **M_1, int **M_4, int **M_5, int **M_7){}
-void calc_C12(int **M_3, int **M_5){}
-void calc_C21(int **M_2, int **M_4){}
-void calc_C22(int **M_1, int **M_2, int **M_3, int **M_6){}
+void calc_C11(int **M_1, int **M_4, int **M_5, int **M_7, int ***D, int dim)
+{
+    matrix_add(M_1, M_4, D, dim);
+    matrix_sub(*D, M_5, D, dim);
+    matrix_add(*D, M_7, D, dim);    
+}
+
+void calc_C12(int **M_3, int **M_5, int ***D, int dim)
+{
+    matrix_add(M_3, M_5, D, dim);    
+}
+void calc_C21(int **M_2, int **M_4, int ***D, int dim)
+{
+    matrix_add(M_2, M_4, D, dim);    
+}
+
+void calc_C22(int **M_1, int **M_2, int **M_3, int **M_6, int ***D, int dim)
+{
+    matrix_sub(M_1, M_2, D, dim);
+    matrix_add(*D, M_3, D, dim);
+    matrix_add(*D, M_6, D, dim);    
+}
 
 
 // WRITE YOUR CODE HERE, you will need to also add functions for each
