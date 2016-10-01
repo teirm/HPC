@@ -17,5 +17,5 @@ void padded_split(int **M, int N, int padded_size, int m_pos);
 
 int **allocMatrix(int size);
 
-void matrix_add(int **M_1, int **M_2, int dim);
-void matrix_sub(int **M_1, int **M_2, int dim);
+void matrix_add(int ***M_1, int **M_2, int dim);
+void matrix_sub(int ***M_1, int **M_2, int dim);
