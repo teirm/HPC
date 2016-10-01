@@ -3,7 +3,7 @@
  * Department of Computer Science
  * CS1645: Introduction to HPC Systems
  * Instructor Bryan Mills, PhD
- * Student: 
+ * Student: Cyrus Ramavarapu 
  * Implement Pthreads version of Strassen algorithm for matrix multiplication.
  */
 
@@ -23,6 +23,33 @@ int **C;
 // Reference matrix, call simpleMM to populate.
 int **R;
 
+/* A Matrices needed for Strassen Algorithm */
+int **A_11;
+int **A_12;
+int **A_21;
+int **A_22;
+
+/* B Matrices needed for Strassen Algorithm */
+int **B_11;
+int **B_12;
+int **B_21;
+int **B_22;
+
+/* B Matrices needed for Strassen Algorithm */
+int **C_11;
+int **C_12;
+int **C_21;
+int **C_22;
+
+/* M Matrices Needed for Strassen Algorithm */ 
+int **M_1;
+int **M_2;
+int **M_3;
+int **M_4;
+int **M_5;
+int **M_6;
+int **M_7;
+
 // Stupid simple Matrix Multiplication, meant as example.
 void simpleMM(int N) {
   for (int i=0; i<N; i++) {
@@ -38,7 +65,6 @@ void simpleMM(int N) {
 // of the sub-matrixes you will need to calculate but you can create your
 // threads in this fucntion.
 void strassenMM(int N) {
-  
 }
 
 // Allocate square matrix.
