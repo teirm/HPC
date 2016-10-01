@@ -21,6 +21,8 @@ void matrix_add(int **M_1, int **M_2, int ***D, int dim);
 void matrix_sub(int **M_1, int **M_2, int ***D, int dim);
 void matrix_mult(int **M_1, int **M_2, int ***D, int dim);
 
+void recombine_matrices(int **C_11, int **C_12, int **C_21, int **C_22, int ***D, int old_dim, int new_dim);
+
 /* Functions for Strassens Algorithm */
 void strassen_allocate(int dim);
 
@@ -32,7 +34,9 @@ void calc_M5(int **A_11, int **A_12, int **B_22, int ***D, int dim);
 void calc_M6(int **A_21, int **A_11, int **B_11, int **B_12, int ***D, int dim);
 void calc_M7(int **A_12, int **A_22, int **B_21, int **B_22, int ***D, int dim);
 
-void calc_C11(int **M_1, int **M_4, int **M_5, int **M_7);
-void calc_C12(int **M_3, int **M_5);
-void calc_C21(int **M_2, int **M_4);
-void calc_C22(int **M_1, int **M_2, int **M_3, int **M_6);
+void calc_C11(int **M_1, int **M_4, int **M_5, int **M_7, int ***D, int dim);
+void calc_C12(int **M_3, int **M_5, int ***D, int dim);
+void calc_C21(int **M_2, int **M_4, int ***D, int dim);
+void calc_C22(int **M_1, int **M_2, int **M_3, int **M_6, int ***D, int dim);
+
+

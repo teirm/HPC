@@ -192,6 +192,34 @@ void strassen_allocate(int dim)
     C_22 = allocMatrix(dim);
 }
 
+void recombine_matrices(int **C_11, int **C_12, int **C_21, int **C_22, int ***D, int old_dim, int new_dim)
+{
+    int i;
+    int j;
+
+    printf("Going to recombine matrices\n");
+
+    for (i = 0; i < old_dim; i++) {
+        for (j = 0; j < old_dim; j++) {
+            if (i < new_dim/2 && j < new_dim/2) { 
+                printf("Adding C_11 at %d %d\n", i,j);
+                (*D)[i][j] = C_11[i][j];
+            } else if (i >= new_dim/2 && j < new_dim/2) {
+                printf("Adding C_21 at %d %d\n", i-new_dim/2,j);
+                (*D)[i][j] = C_21[i-new_dim/2][j];
+            } else if (i < new_dim/2 && j >= new_dim/2) {
+                printf("Adding C_12 at %d %d\n", i,j-new_dim/2);
+                (*D)[i][j] = C_12[i][j-new_dim/2];
+            } else {
+                printf("Adding C_22 at %d %d\n", i-new_dim/2,j-new_dim/2);
+                (*D)[i][j] = C_22[i-new_dim/2][j-new_dim/2];
+            }
+        }
+    }
+}
+
+
+
 void calc_M1(int **A_11, int **A_22, int **B_11, int **B_22, int ***D, int dim)
 {
 
@@ -263,6 +291,7 @@ void calc_M6(int **A_21, int **A_11, int **B_11, int **B_12, int ***D, int dim)
     matrix_add(B_11, B_12, &T_2, dim);
     matrix_mult(T_1, T_2, D, dim); 
 }
+
 void calc_M7(int **A_12, int **A_22, int **B_21, int **B_22, int ***D, int dim)
 {
     int **T_1;
@@ -299,7 +328,6 @@ void calc_C22(int **M_1, int **M_2, int **M_3, int **M_6, int ***D, int dim)
     matrix_add(*D, M_6, D, dim);    
 }
 
-
 // WRITE YOUR CODE HERE, you will need to also add functions for each
 // of the sub-matrixes you will need to calculate but you can create your
 // threads in this fucntion.
@@ -313,57 +341,33 @@ void strassenMM(int N) {
     } 
     
     strassen_allocate(new_size/2); 
+  
+    printf("Matrix A:\n");
+    printMatrix(A,N);
+     
+    printf("Matrix B:\n");
+    printMatrix(B,N);
    
     padded_split(A,N,new_size,0);
     padded_split(B,N,new_size,1);
-    
-    printf("A_11\n");
-    printMatrix(A_11, new_size/2);
-     
-    
-    printf("\n\nA_22\n");
-    printMatrix(A_22, new_size/2);
-    
-    printf("\n\nB_11\n");
-    printMatrix(B_11, new_size/2);
-    
-    printf("\n\nB_22\n"); 
-    printMatrix(B_22, new_size/2);
    
     calc_M1(A_11, A_22, B_11, B_22, &M_1, new_size/2); 
+    calc_M2(A_21, A_22, B_11, &M_2, new_size/2);
+    calc_M3(A_11, B_12, B_22, &M_3, new_size/2);
+    calc_M4(A_22, B_21, B_11, &M_4, new_size/2);
+    calc_M5(A_11, A_12, B_22, &M_5, new_size/2);
+    calc_M6(A_21, A_11, B_11, B_12, &M_6, new_size/2);
+    calc_M7(A_12, A_22, B_21, B_22, &M_7, new_size/2);
 
-    printf("\n\nM_1\n");
-    printMatrix(M_1, new_size/2);
-    
-    
 
-/*   printMatrix(A,N);
+    calc_C11(M_1, M_4, M_5, M_7, &C_11, new_size/2);
+    calc_C12(M_3, M_5, &C_12, new_size/2);
+    calc_C21(M_2, M_4, &C_21, new_size/2);
+    calc_C22(M_1, M_2, M_3, M_6, &C_22, new_size/2);
     
-    
-    printf("A_12\n"); 
-    printMatrix(A_12,new_size/2);
-    
-    printf("A_21\n"); 
-    printMatrix(A_21,new_size/2);
-    
-    printf("A_22\n"); 
-    printMatrix(A_22,new_size/2);
-*/
+    recombine_matrices(C_11, C_12, C_21, C_22, &C, N, new_size);
 
-/*    printMatrix(B,N);
-    
-    printf("B_11\n"); 
-    printMatrix(B_11,new_size/2);
-    
-    printf("B_12\n"); 
-    printMatrix(B_12,new_size/2);
-    
-    printf("B_21\n"); 
-    printMatrix(B_21,new_size/2);
-    
-    printf("B_22\n"); 
-    printMatrix(B_22,new_size/2);
-*/
+    printMatrix(C, N);
 
 }
 
