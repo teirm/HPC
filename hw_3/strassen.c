@@ -207,6 +207,16 @@ void strassen_allocate(int dim)
 
 void strassen_deallocate(int dim)
 {
+    matrix_free(&A_11, dim); 
+    matrix_free(&A_12, dim); 
+    matrix_free(&A_21, dim); 
+    matrix_free(&A_22, dim); 
+    
+    matrix_free(&B_11, dim); 
+    matrix_free(&B_12, dim); 
+    matrix_free(&B_21, dim); 
+    matrix_free(&B_22, dim); 
+    
     matrix_free(&M_1, dim);
     matrix_free(&M_2, dim);
     matrix_free(&M_3, dim);
