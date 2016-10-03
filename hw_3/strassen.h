@@ -23,8 +23,13 @@ void matrix_mult(int **M_1, int **M_2, int ***D, int dim);
 
 void recombine_matrices(int **C_11, int **C_12, int **C_21, int **C_22, int ***D, int old_dim, int new_dim);
 
+void matrix_free(int ***M, int dim);
+
+void cleanup(int dim);
+
 /* Functions for Strassens Algorithm */
 void strassen_allocate(int dim);
+void strassen_deallocate(int dim);
 
 void calc_M1(int **A_11, int **A_22, int **B_11, int **B_22, int ***D, int dim);
 void calc_M2(int **A_21, int **A_22, int **B_11, int ***D, int dim);

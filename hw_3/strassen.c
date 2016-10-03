@@ -71,6 +71,7 @@ int compute_next_power_two(int val)
     return next_power_two;
 }
 
+
 void padded_split(int **M, int N, int padded_size, int m_pos)
 {
 
@@ -137,6 +138,18 @@ void simpleMM(int N) {
   }
 }
 
+void matrix_free(int ***M, int dim)
+{
+    int i;
+
+    for (i = 0; i < dim; i++) {
+        free((*M)[i]);
+    }
+
+    free(*M);
+}
+
+
 void matrix_mult(int **M_1, int **M_2, int ***D, int dim)
 {
     int i;
@@ -192,6 +205,23 @@ void strassen_allocate(int dim)
     C_22 = allocMatrix(dim);
 }
 
+void strassen_deallocate(int dim)
+{
+    matrix_free(&M_1, dim);
+    matrix_free(&M_2, dim);
+    matrix_free(&M_3, dim);
+    matrix_free(&M_4, dim);
+    matrix_free(&M_5, dim);
+    matrix_free(&M_6, dim);
+    matrix_free(&M_7, dim);
+    
+    matrix_free(&C_11, dim);
+    matrix_free(&C_12, dim);
+    matrix_free(&C_21, dim);
+    matrix_free(&C_22, dim);            
+}
+
+
 void recombine_matrices(int **C_11, int **C_12, int **C_21, int **C_22, int ***D, int old_dim, int new_dim)
 {
     int i;
@@ -202,16 +232,16 @@ void recombine_matrices(int **C_11, int **C_12, int **C_21, int **C_22, int ***D
     for (i = 0; i < old_dim; i++) {
         for (j = 0; j < old_dim; j++) {
             if (i < new_dim/2 && j < new_dim/2) { 
-                printf("Adding C_11 at %d %d\n", i,j);
+//                printf("Adding C_11 at %d %d\n", i,j);
                 (*D)[i][j] = C_11[i][j];
             } else if (i >= new_dim/2 && j < new_dim/2) {
-                printf("Adding C_21 at %d %d\n", i-new_dim/2,j);
+//                printf("Adding C_21 at %d %d\n", i-new_dim/2,j);
                 (*D)[i][j] = C_21[i-new_dim/2][j];
             } else if (i < new_dim/2 && j >= new_dim/2) {
-                printf("Adding C_12 at %d %d\n", i,j-new_dim/2);
+//                printf("Adding C_12 at %d %d\n", i,j-new_dim/2);
                 (*D)[i][j] = C_12[i][j-new_dim/2];
             } else {
-                printf("Adding C_22 at %d %d\n", i-new_dim/2,j-new_dim/2);
+//                printf("Adding C_22 at %d %d\n", i-new_dim/2,j-new_dim/2);
                 (*D)[i][j] = C_22[i-new_dim/2][j-new_dim/2];
             }
         }
@@ -233,6 +263,9 @@ void calc_M1(int **A_11, int **A_22, int **B_11, int **B_22, int ***D, int dim)
     matrix_add(B_11, B_22, &T_2, dim);
 
     matrix_mult(T_1, T_2, D, dim);
+
+    matrix_free(&T_1, dim);
+    matrix_free(&T_2, dim);
 }
 
 void calc_M2(int **A_21, int **A_22, int **B_11, int ***D, int dim)
@@ -244,6 +277,8 @@ void calc_M2(int **A_21, int **A_22, int **B_11, int ***D, int dim)
     
     matrix_add(A_21, A_22, &T_1, dim);
     matrix_mult(T_1, B_11, D, dim); 
+    
+    matrix_free(&T_1, dim);
 }
 
 void calc_M3(int **A_11, int **B_12, int **B_22, int ***D, int dim)
@@ -255,6 +290,8 @@ void calc_M3(int **A_11, int **B_12, int **B_22, int ***D, int dim)
 
     matrix_sub(B_12, B_22, &T_1, dim);
     matrix_mult(A_11, T_1, D, dim);
+    
+    matrix_free(&T_1, dim);
 }
 
 void calc_M4(int **A_22, int **B_21, int **B_11, int ***D, int dim)
@@ -266,6 +303,8 @@ void calc_M4(int **A_22, int **B_21, int **B_11, int ***D, int dim)
     
     matrix_sub(B_21, B_11, &T_1, dim);
     matrix_mult(A_22, T_1, D, dim);    
+    
+    matrix_free(&T_1, dim);
 }
 
 
@@ -277,6 +316,8 @@ void calc_M5(int **A_11, int **A_12, int **B_22, int ***D, int dim)
     
     matrix_add(A_11, A_12, &T_1, dim);
     matrix_mult(T_1, B_22, D, dim);
+    
+    matrix_free(&T_1, dim);
 }
 
 void calc_M6(int **A_21, int **A_11, int **B_11, int **B_12, int ***D, int dim)
@@ -290,6 +331,9 @@ void calc_M6(int **A_21, int **A_11, int **B_11, int **B_12, int ***D, int dim)
     matrix_sub(A_21, A_11, &T_1, dim);
     matrix_add(B_11, B_12, &T_2, dim);
     matrix_mult(T_1, T_2, D, dim); 
+    
+    matrix_free(&T_1, dim);
+    matrix_free(&T_2, dim);
 }
 
 void calc_M7(int **A_12, int **A_22, int **B_21, int **B_22, int ***D, int dim)
@@ -303,6 +347,9 @@ void calc_M7(int **A_12, int **A_22, int **B_21, int **B_22, int ***D, int dim)
     matrix_sub(A_12, A_22, &T_1, dim);
     matrix_add(B_21, B_22, &T_2, dim);
     matrix_mult(T_1, T_2, D, dim);
+    
+    matrix_free(&T_1, dim);
+    matrix_free(&T_2, dim);
 }
 
 void calc_C11(int **M_1, int **M_4, int **M_5, int **M_7, int ***D, int dim)
@@ -359,7 +406,6 @@ void strassenMM(int N) {
     calc_M6(A_21, A_11, B_11, B_12, &M_6, new_size/2);
     calc_M7(A_12, A_22, B_21, B_22, &M_7, new_size/2);
 
-
     calc_C11(M_1, M_4, M_5, M_7, &C_11, new_size/2);
     calc_C12(M_3, M_5, &C_12, new_size/2);
     calc_C21(M_2, M_4, &C_21, new_size/2);
@@ -368,7 +414,8 @@ void strassenMM(int N) {
     recombine_matrices(C_11, C_12, C_21, C_22, &C, N, new_size);
 
     printMatrix(C, N);
-
+    
+    strassen_deallocate(new_size/2);
 }
 
 // Allocate square matrix.
@@ -396,11 +443,11 @@ void initMatrixes(int N) {
 }
 
 // Free up matrixes.
-void cleanup() {
-  free(A);
-  free(B);
-  free(C);
-  free(R);
+void cleanup(int dim) {
+  matrix_free(&A, dim);
+  matrix_free(&B, dim);
+  matrix_free(&C, dim);
+  matrix_free(&R, dim);
 }
 
 // Main method
@@ -440,7 +487,6 @@ int main(int argc, char* argv[]) {
   strassenMM(N);
   printf("Strassen MM took %ld ms\n", timerStop());
 
-/* NOTE: Commented out for debugging purposes
   if (compareMatrix(C, R, N) != 0) {
     if (N < 20) {
       printf("\n\n------- MATRIX C\n");
@@ -450,9 +496,8 @@ int main(int argc, char* argv[]) {
     }
     printf("Matrix C doesn't match Matrix R, if N < 20 they will be printed above.\n");
   }
-*/
   // stopping timer
   
-  cleanup();
+  cleanup(N);
   return 0;
 }
