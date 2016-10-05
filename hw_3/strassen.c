@@ -16,6 +16,9 @@
 #include <string.h>
 #include <time.h>
 
+#define M_MAT_COUNT 8
+#define C_MAT_COUNT 4
+
 // Make these globals so threads can operate on them. You will need to
 // add additional matrixes for all the M and C values in the Strassen
 // algorithms.
@@ -74,15 +77,17 @@ int compute_next_power_two(int val)
 
 void padded_split(int **M, int N, int padded_size, int m_pos)
 {
-
     int i;
     int j;
+    int half_size;
+
+    half_size = padded_size/2;
 
     if (m_pos == 0) {
-        A_11 = allocMatrix(padded_size/2);
-        A_12 = allocMatrix(padded_size/2);
-        A_21 = allocMatrix(padded_size/2);
-        A_22 = allocMatrix(padded_size/2); 
+        A_11 = allocMatrix(&half_size);
+        A_12 = allocMatrix(&half_size);
+        A_21 = allocMatrix(&half_size);
+        A_22 = allocMatrix(&half_size); 
         
         for (i = 0; i < N; i++) {
             for (j = 0; j < N; j++) {
@@ -102,10 +107,10 @@ void padded_split(int **M, int N, int padded_size, int m_pos)
             }
         }
     } else {
-        B_11 = allocMatrix(padded_size/2);
-        B_12 = allocMatrix(padded_size/2);
-        B_21 = allocMatrix(padded_size/2);
-        B_22 = allocMatrix(padded_size/2); 
+        B_11 = allocMatrix(&half_size);
+        B_12 = allocMatrix(&half_size);
+        B_21 = allocMatrix(&half_size);
+        B_22 = allocMatrix(&half_size); 
         
         for (i = 0; i < N; i++) {
             for (j = 0; j < N; j++) {
@@ -138,11 +143,11 @@ void simpleMM(int N) {
   }
 }
 
-void matrix_free(int ***M, int dim)
+void matrix_free(int ***M, int *dim)
 {
     int i;
 
-    for (i = 0; i < dim; i++) {
+    for (i = 0; i < *dim; i++) {
         free((*M)[i]);
     }
 
@@ -150,46 +155,46 @@ void matrix_free(int ***M, int dim)
 }
 
 
-void matrix_mult(int **M_1, int **M_2, int ***D, int dim)
+void matrix_mult(int **M_1, int **M_2, int ***D, int *dim)
 {
     int i;
     int j;
     int k;
 
-    for (i = 0; i < dim; i++) {
-        for (j = 0; j < dim; j++) {
-            for (k = 0; k < dim; k++) {
+    for (i = 0; i < *dim; i++) {
+        for (j = 0; j < *dim; j++) {
+            for (k = 0; k < *dim; k++) {
                 (*D)[i][j] += M_1[i][k] * M_2[k][j];
             }
         }
     }
 }
 
-void matrix_add(int **T_1, int **T_2, int ***D, int dim)
+void matrix_add(int **T_1, int **T_2, int ***D, int *dim)
 {
     int i;
     int j;
 
-    for(i = 0; i < dim; i++) {
-        for (j = 0; j < dim; j++) {
+    for(i = 0; i < *dim; i++) {
+        for (j = 0; j < *dim; j++) {
             (*D)[i][j] = T_1[i][j] + T_2[i][j];
         }
     }
 }
 
-void matrix_sub(int **T_1, int **T_2, int ***D, int dim)
+void matrix_sub(int **T_1, int **T_2, int ***D, int *dim)
 {
     int i;
     int j;
 
-    for(i = 0; i < dim; i++) {
-        for (j = 0; j < dim; j++) {
+    for(i = 0; i < *dim; i++) {
+        for (j = 0; j < *dim; j++) {
             (*D)[i][j] = T_1[i][j] - T_2[i][j];
         }
     }
 }
 
-void strassen_allocate(int dim)
+void strassen_allocate(int *dim)
 {
     M_1 = allocMatrix(dim);
     M_2 = allocMatrix(dim);
@@ -205,7 +210,7 @@ void strassen_allocate(int dim)
     C_22 = allocMatrix(dim);
 }
 
-void strassen_deallocate(int dim)
+void strassen_deallocate(int *dim)
 {
     matrix_free(&A_11, dim); 
     matrix_free(&A_12, dim); 
@@ -260,7 +265,7 @@ void recombine_matrices(int **C_11, int **C_12, int **C_21, int **C_22, int ***D
 
 
 
-void calc_M1(int **A_11, int **A_22, int **B_11, int **B_22, int ***D, int dim)
+void *calc_M1(void *A_11, void *A_22, void *B_11, void *B_22, void *D, void *dim)
 {
 
     int **T_1;
@@ -278,9 +283,8 @@ void calc_M1(int **A_11, int **A_22, int **B_11, int **B_22, int ***D, int dim)
     matrix_free(&T_2, dim);
 }
 
-void calc_M2(int **A_21, int **A_22, int **B_11, int ***D, int dim)
+void *calc_M2(void *A_21, void *A_22, void *B_11, void *D, void *dim)
 {
-    
     int **T_1;
     
     T_1 = allocMatrix(dim);
@@ -291,7 +295,7 @@ void calc_M2(int **A_21, int **A_22, int **B_11, int ***D, int dim)
     matrix_free(&T_1, dim);
 }
 
-void calc_M3(int **A_11, int **B_12, int **B_22, int ***D, int dim)
+void *calc_M3(void *A_11, void *B_12, void *B_22, void *D, void *dim)
 {
 
     int **T_1;
@@ -304,7 +308,7 @@ void calc_M3(int **A_11, int **B_12, int **B_22, int ***D, int dim)
     matrix_free(&T_1, dim);
 }
 
-void calc_M4(int **A_22, int **B_21, int **B_11, int ***D, int dim)
+void *calc_M4(void *A_22, void *B_21, void *B_11, void *D, void *dim)
 {
     
     int **T_1;
@@ -318,7 +322,7 @@ void calc_M4(int **A_22, int **B_21, int **B_11, int ***D, int dim)
 }
 
 
-void calc_M5(int **A_11, int **A_12, int **B_22, int ***D, int dim)
+void *calc_M5(void *A_11, void *A_12, void *B_22, void *D, void *dim)
 {
     int **T_1;
     
@@ -330,7 +334,7 @@ void calc_M5(int **A_11, int **A_12, int **B_22, int ***D, int dim)
     matrix_free(&T_1, dim);
 }
 
-void calc_M6(int **A_21, int **A_11, int **B_11, int **B_12, int ***D, int dim)
+void *calc_M6(void *A_21, void *A_11, void *B_11, void *B_12, void *D, void *dim)
 {
     int **T_1;
     int **T_2;
@@ -346,7 +350,7 @@ void calc_M6(int **A_21, int **A_11, int **B_11, int **B_12, int ***D, int dim)
     matrix_free(&T_2, dim);
 }
 
-void calc_M7(int **A_12, int **A_22, int **B_21, int **B_22, int ***D, int dim)
+void *calc_M7(void *A_12, void *A_22, void *B_21, void *B_22, void *D, void *dim)
 {
     int **T_1;
     int **T_2;
@@ -362,27 +366,27 @@ void calc_M7(int **A_12, int **A_22, int **B_21, int **B_22, int ***D, int dim)
     matrix_free(&T_2, dim);
 }
 
-void calc_C11(int **M_1, int **M_4, int **M_5, int **M_7, int ***D, int dim)
+void calc_C11(void *M_1, void *M_4, void *M_5, void *M_7, void *D, void *dim)
 {
     matrix_add(M_1, M_4, D, dim);
-    matrix_sub(*D, M_5, D, dim);
-    matrix_add(*D, M_7, D, dim);    
+    matrix_sub(*(int ***)D, M_5, D, dim);
+    matrix_add(*(int ***)D, M_7, D, dim);    
 }
 
-void calc_C12(int **M_3, int **M_5, int ***D, int dim)
+void calc_C12(void *M_3, void *M_5, void *D, void *dim)
 {
     matrix_add(M_3, M_5, D, dim);    
 }
-void calc_C21(int **M_2, int **M_4, int ***D, int dim)
+void calc_C21(void *M_2, void *M_4, void *D, void *dim)
 {
     matrix_add(M_2, M_4, D, dim);    
 }
 
-void calc_C22(int **M_1, int **M_2, int **M_3, int **M_6, int ***D, int dim)
+void calc_C22(void *M_1, void *M_2, void *M_3, void *M_6, void *D, void *dim)
 {
     matrix_sub(M_1, M_2, D, dim);
-    matrix_add(*D, M_3, D, dim);
-    matrix_add(*D, M_6, D, dim);    
+    matrix_add(*(int ***)D, M_3, D, dim);
+    matrix_add(*(int ***)D, M_6, D, dim);    
 }
 
 // WRITE YOUR CODE HERE, you will need to also add functions for each
@@ -390,14 +394,21 @@ void calc_C22(int **M_1, int **M_2, int **M_3, int **M_6, int ***D, int dim)
 // threads in this fucntion.
 void strassenMM(int N) {
     
-    int new_size; 
-    new_size = N; 
+    int new_size;
+    int half_size; 
+    pthread_t c_mat_ids[C_MAT_COUNT];
+    pthread_t m_mat_ids[M_MAT_COUNT]; 
+  
+    new_size = N;
+    half_size = 0;
    
     if (is_power_two(N) == 0) {
         new_size = compute_next_power_two(N);
     } 
+   
+    half_size = new_size/2; 
     
-    strassen_allocate(new_size/2); 
+    strassen_allocate(&half_size); 
   
     printf("Matrix A:\n");
     printMatrix(A,N);
@@ -407,36 +418,41 @@ void strassenMM(int N) {
    
     padded_split(A,N,new_size,0);
     padded_split(B,N,new_size,1);
-   
-    calc_M1(A_11, A_22, B_11, B_22, &M_1, new_size/2); 
-    calc_M2(A_21, A_22, B_11, &M_2, new_size/2);
-    calc_M3(A_11, B_12, B_22, &M_3, new_size/2);
-    calc_M4(A_22, B_21, B_11, &M_4, new_size/2);
-    calc_M5(A_11, A_12, B_22, &M_5, new_size/2);
-    calc_M6(A_21, A_11, B_11, B_12, &M_6, new_size/2);
-    calc_M7(A_12, A_22, B_21, B_22, &M_7, new_size/2);
+  
+    /* Add Threads for each */   
+    calc_M1(A_11, A_22, B_11, B_22, &M_1, &half_size); 
+    calc_M2(A_21, A_22, B_11, &M_2, &half_size);
+    calc_M3(A_11, B_12, B_22, &M_3, &half_size);
+    calc_M4(A_22, B_21, B_11, &M_4, &half_size);
+    calc_M5(A_11, A_12, B_22, &M_5, &half_size);
+    calc_M6(A_21, A_11, B_11, B_12, &M_6, &half_size);
+    calc_M7(A_12, A_22, B_21, B_22, &M_7, &half_size);
 
-    calc_C11(M_1, M_4, M_5, M_7, &C_11, new_size/2);
-    calc_C12(M_3, M_5, &C_12, new_size/2);
-    calc_C21(M_2, M_4, &C_21, new_size/2);
-    calc_C22(M_1, M_2, M_3, M_6, &C_22, new_size/2);
+    /* Add Barrier for previous threads */
+
+    calc_C11(M_1, M_4, M_5, M_7, &C_11, &half_size);
+    calc_C12(M_3, M_5, &C_12, &half_size);
+    calc_C21(M_2, M_4, &C_21, &half_size);
+    calc_C22(M_1, M_2, M_3, M_6, &C_22, &half_size);
+  
+    /* Add barrier for previous threads */ 
     
     recombine_matrices(C_11, C_12, C_21, C_22, &C, N, new_size);
 
     printMatrix(C, N);
     
-    strassen_deallocate(new_size/2);
+    strassen_deallocate(&half_size);
 }
 
 // Allocate square matrix.
-int **allocMatrix(int size) {
+int **allocMatrix(int *size) {
   int **matrix;
-  matrix = (int **)malloc(size * sizeof(int *));
-  for (int row = 0; row < size; row++) {
-    matrix[row] = (int *)malloc(size * sizeof(int));
+  matrix = (int **)malloc(*size * sizeof(int *));
+  for (int row = 0; row < *size; row++) {
+    matrix[row] = (int *)malloc(*size * sizeof(int));
   }
-  for (int i = 0; i < size; i++) {
-    for (int j = 0; j < size; j++) {
+  for (int i = 0; i < *size; i++) {
+    for (int j = 0; j < *size; j++) {
       matrix[i][j] = 0;
     }
   }
@@ -445,7 +461,7 @@ int **allocMatrix(int size) {
 
 // Allocate memory for all the matrixes, you will need to add code
 // here to initialize any matrixes that you need.
-void initMatrixes(int N) {
+void initMatrixes(int *N) {
   A = allocMatrix(N);
   B = allocMatrix(N);
   C = allocMatrix(N);
@@ -453,7 +469,7 @@ void initMatrixes(int N) {
 }
 
 // Free up matrixes.
-void cleanup(int dim) {
+void cleanup(int *dim) {
   matrix_free(&A, dim);
   matrix_free(&B, dim);
   matrix_free(&C, dim);
@@ -471,7 +487,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
   N = atoi(argv[1]);
-  initMatrixes(N);
+  initMatrixes(&N);
 
   // reading files (optional)
   if(argc == 4){
@@ -508,6 +524,6 @@ int main(int argc, char* argv[]) {
   }
   // stopping timer
   
-  cleanup(N);
+  cleanup(&N);
   return 0;
 }
