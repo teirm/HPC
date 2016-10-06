@@ -19,6 +19,8 @@
 #define M_MAT_COUNT 8
 #define C_MAT_COUNT 4
 
+int m_thread_counter;
+int c_thread_counter; 
 // Make these globals so threads can operate on them. You will need to
 // add additional matrixes for all the M and C values in the Strassen
 // algorithms.
@@ -265,7 +267,7 @@ void recombine_matrices(int **C_11, int **C_12, int **C_21, int **C_22, int ***D
 
 
 
-void *calc_M1(void *A_11, void *A_22, void *B_11, void *B_22, void *D, void *dim)
+void *calc_M1(void *dim)
 {
 
     int **T_1;
@@ -277,25 +279,29 @@ void *calc_M1(void *A_11, void *A_22, void *B_11, void *B_22, void *D, void *dim
     matrix_add(A_11, A_22, &T_1, dim);
     matrix_add(B_11, B_22, &T_2, dim);
 
-    matrix_mult(T_1, T_2, D, dim);
+    matrix_mult(T_1, T_2, &M_1, dim);
 
     matrix_free(&T_1, dim);
     matrix_free(&T_2, dim);
+
+    m_thread_counter++;
 }
 
-void *calc_M2(void *A_21, void *A_22, void *B_11, void *D, void *dim)
+void *calc_M2(void *dim)
 {
     int **T_1;
     
     T_1 = allocMatrix(dim);
     
     matrix_add(A_21, A_22, &T_1, dim);
-    matrix_mult(T_1, B_11, D, dim); 
+    matrix_mult(T_1, B_11, &M_2, dim); 
     
     matrix_free(&T_1, dim);
+
+    m_thread_counter++;
 }
 
-void *calc_M3(void *A_11, void *B_12, void *B_22, void *D, void *dim)
+void *calc_M3(void *dim)
 {
 
     int **T_1;
@@ -303,12 +309,14 @@ void *calc_M3(void *A_11, void *B_12, void *B_22, void *D, void *dim)
     T_1 = allocMatrix(dim);
 
     matrix_sub(B_12, B_22, &T_1, dim);
-    matrix_mult(A_11, T_1, D, dim);
+    matrix_mult(A_11, T_1, &M_3, dim);
     
     matrix_free(&T_1, dim);
+    
+    m_thread_counter++;
 }
 
-void *calc_M4(void *A_22, void *B_21, void *B_11, void *D, void *dim)
+void *calc_M4(void *dim)
 {
     
     int **T_1;
@@ -316,25 +324,28 @@ void *calc_M4(void *A_22, void *B_21, void *B_11, void *D, void *dim)
     T_1 = allocMatrix(dim);
     
     matrix_sub(B_21, B_11, &T_1, dim);
-    matrix_mult(A_22, T_1, D, dim);    
+    matrix_mult(A_22, T_1, &M_4, dim);    
     
     matrix_free(&T_1, dim);
+
+    m_thread_counter++;
 }
 
-
-void *calc_M5(void *A_11, void *A_12, void *B_22, void *D, void *dim)
+void *calc_M5(void *dim)
 {
     int **T_1;
     
     T_1 = allocMatrix(dim);
     
     matrix_add(A_11, A_12, &T_1, dim);
-    matrix_mult(T_1, B_22, D, dim);
+    matrix_mult(T_1, B_22, &M_5, dim);
     
     matrix_free(&T_1, dim);
+
+    m_thread_counter++;
 }
 
-void *calc_M6(void *A_21, void *A_11, void *B_11, void *B_12, void *D, void *dim)
+void *calc_M6(void *dim)
 {
     int **T_1;
     int **T_2;
@@ -344,13 +355,15 @@ void *calc_M6(void *A_21, void *A_11, void *B_11, void *B_12, void *D, void *dim
     
     matrix_sub(A_21, A_11, &T_1, dim);
     matrix_add(B_11, B_12, &T_2, dim);
-    matrix_mult(T_1, T_2, D, dim); 
+    matrix_mult(T_1, T_2, &M_6, dim); 
     
     matrix_free(&T_1, dim);
     matrix_free(&T_2, dim);
+
+    m_thread_counter++;
 }
 
-void *calc_M7(void *A_12, void *A_22, void *B_21, void *B_22, void *D, void *dim)
+void *calc_M7(void *dim)
 {
     int **T_1;
     int **T_2;
@@ -360,10 +373,12 @@ void *calc_M7(void *A_12, void *A_22, void *B_21, void *B_22, void *D, void *dim
 
     matrix_sub(A_12, A_22, &T_1, dim);
     matrix_add(B_21, B_22, &T_2, dim);
-    matrix_mult(T_1, T_2, D, dim);
+    matrix_mult(T_1, T_2, &M_7, dim);
     
     matrix_free(&T_1, dim);
     matrix_free(&T_2, dim);
+
+    m_thread_counter++;
 }
 
 void calc_C11(void *M_1, void *M_4, void *M_5, void *M_7, void *D, void *dim)
@@ -396,11 +411,18 @@ void strassenMM(int N) {
     
     int new_size;
     int half_size; 
+   
     pthread_t c_mat_ids[C_MAT_COUNT];
     pthread_t m_mat_ids[M_MAT_COUNT]; 
-  
+    
+    pthread_mutex_t m_barrier_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t *c_barrier_mutex;
+     
     new_size = N;
     half_size = 0;
+  
+    m_thread_counter = 0;
+    c_thread_counter = 0; 
    
     if (is_power_two(N) == 0) {
         new_size = compute_next_power_two(N);
@@ -418,25 +440,36 @@ void strassenMM(int N) {
    
     padded_split(A,N,new_size,0);
     padded_split(B,N,new_size,1);
+ 
+    pthread_mutex_init(&m_barrier_mutex, NULL);     
   
-    /* Add Threads for each */   
-    calc_M1(A_11, A_22, B_11, B_22, &M_1, &half_size); 
-    calc_M2(A_21, A_22, B_11, &M_2, &half_size);
-    calc_M3(A_11, B_12, B_22, &M_3, &half_size);
-    calc_M4(A_22, B_21, B_11, &M_4, &half_size);
-    calc_M5(A_11, A_12, B_22, &M_5, &half_size);
-    calc_M6(A_21, A_11, B_11, B_12, &M_6, &half_size);
-    calc_M7(A_12, A_22, B_21, B_22, &M_7, &half_size);
+    /* Add Threads for each */
+    pthread_create(&m_mat_ids[0], NULL, calc_M1, &half_size); 
+    pthread_create(&m_mat_ids[1], NULL, calc_M2, &half_size); 
+    pthread_create(&m_mat_ids[2], NULL, calc_M3, &half_size); 
+    pthread_create(&m_mat_ids[3], NULL, calc_M4, &half_size); 
+    pthread_create(&m_mat_ids[4], NULL, calc_M5, &half_size); 
+    pthread_create(&m_mat_ids[5], NULL, calc_M6, &half_size); 
+    pthread_create(&m_mat_ids[6], NULL, calc_M7, &half_size); 
 
-    /* Add Barrier for previous threads */
+/*
+    calc_M1(&half_size); 
+    calc_M2(&half_size);
+    calc_M3(&half_size);
+    calc_M4(&half_size);
+    calc_M5(&half_size);
+    calc_M6(&half_size);
+    calc_M7(&half_size);
+*/
+    while (m_thread_counter < M_MAT_COUNT - 1);
 
+    /* Add Barrier for previous threads */ 
     calc_C11(M_1, M_4, M_5, M_7, &C_11, &half_size);
     calc_C12(M_3, M_5, &C_12, &half_size);
     calc_C21(M_2, M_4, &C_21, &half_size);
     calc_C22(M_1, M_2, M_3, M_6, &C_22, &half_size);
-  
-    /* Add barrier for previous threads */ 
     
+    /* Add barrier for previous threads */ 
     recombine_matrices(C_11, C_12, C_21, C_22, &C, N, new_size);
 
     printMatrix(C, N);

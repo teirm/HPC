@@ -31,13 +31,13 @@ void cleanup(int *dim);
 void strassen_allocate(int *dim);
 void strassen_deallocate(int *dim);
 
-void *calc_M1(void *A_11, void *A_22, void *B_11, void *B_22, void *D, void *dim);
-void *calc_M2(void *A_21, void *A_22, void *B_11, void *D, void *dim);
-void *calc_M3(void *A_11, void *B_12, void *B_22, void *D, void *dim);
-void *calc_M4(void *A_22, void *B_21, void *B_11, void *D, void *dim);
-void *calc_M5(void *A_11, void *A_12, void *B_22, void *D, void *dim);
-void *calc_M6(void *A_21, void *A_11, void *B_11, void *B_12, void *D, void *dim);
-void *calc_M7(void *A_12, void *A_22, void *B_21, void *B_22, void *D, void *dim);
+void *calc_M1(void *dim);
+void *calc_M2(void *dim);
+void *calc_M3(void *dim);
+void *calc_M4(void *dim);
+void *calc_M5(void *dim);
+void *calc_M6(void *dim);
+void *calc_M7(void *dim);
 
 void calc_C11(void *M_1, void *M_4, void *M_5, void *M_7, void *D, void *dim);
 void calc_C12(void *M_3, void *M_5, void *D, void *dim);
