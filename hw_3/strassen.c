@@ -16,11 +16,12 @@
 #include <string.h>
 #include <time.h>
 
-#define M_MAT_COUNT 8
+#define M_MAT_COUNT 7
 #define C_MAT_COUNT 4
 
-int m_thread_counter;
-int c_thread_counter; 
+int m_thread_counter = 0;
+int c_thread_counter = 0; 
+
 // Make these globals so threads can operate on them. You will need to
 // add additional matrixes for all the M and C values in the Strassen
 // algorithms.
@@ -386,16 +387,22 @@ void *calc_C11(void *dim)
     matrix_add(M_1, M_4, &C_11, dim);
     matrix_sub(C_11, M_5, &C_11, dim);
     matrix_add(C_11, M_7, &C_11, dim);    
+
+    c_thread_counter++; 
 }
 
 void *calc_C12(void *dim)
 {
     matrix_add(M_3, M_5, &C_12, dim);    
+    
+    c_thread_counter++;
 }
 
 void *calc_C21(void *dim)
 {
     matrix_add(M_2, M_4, &C_21, dim);    
+
+    c_thread_counter++;
 }
 
 void *calc_C22(void *dim)
@@ -403,6 +410,8 @@ void *calc_C22(void *dim)
     matrix_sub(M_1, M_2, &C_22, dim);
     matrix_add(C_22, M_3, &C_22, dim);
     matrix_add(C_22, M_6, &C_22, dim);    
+
+    c_thread_counter++;
 }
 
 // WRITE YOUR CODE HERE, you will need to also add functions for each
@@ -415,16 +424,15 @@ void strassenMM(int N) {
    
     pthread_t c_mat_ids[C_MAT_COUNT];
     pthread_t m_mat_ids[M_MAT_COUNT]; 
-    
-    pthread_mutex_t m_barrier_mutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_t *c_barrier_mutex;
      
     new_size = N;
     half_size = 0;
-  
+
+/* 
     m_thread_counter = 0;
     c_thread_counter = 0; 
-   
+*/   
+
     if (is_power_two(N) == 0) {
         new_size = compute_next_power_two(N);
     } 
@@ -432,17 +440,9 @@ void strassenMM(int N) {
     half_size = new_size/2; 
     
     strassen_allocate(&half_size); 
-  
-    printf("Matrix A:\n");
-    printMatrix(A,N);
-     
-    printf("Matrix B:\n");
-    printMatrix(B,N);
    
     padded_split(A,N,new_size,0);
     padded_split(B,N,new_size,1);
- 
-    pthread_mutex_init(&m_barrier_mutex, NULL);     
   
     /* Add Threads for each */
     pthread_create(&m_mat_ids[0], NULL, calc_M1, &half_size); 
@@ -452,23 +452,17 @@ void strassenMM(int N) {
     pthread_create(&m_mat_ids[4], NULL, calc_M5, &half_size); 
     pthread_create(&m_mat_ids[5], NULL, calc_M6, &half_size); 
     pthread_create(&m_mat_ids[6], NULL, calc_M7, &half_size); 
+    
+    /* Barrier for M matrices calculation */ 
+    while (m_thread_counter < M_MAT_COUNT);
 
-/*
-    calc_M1(&half_size); 
-    calc_M2(&half_size);
-    calc_M3(&half_size);
-    calc_M4(&half_size);
-    calc_M5(&half_size);
-    calc_M6(&half_size);
-    calc_M7(&half_size);
-*/
-    while (m_thread_counter < M_MAT_COUNT - 1);
-
-    /* Add Barrier for previous threads */ 
-    calc_C11(&half_size);
-    calc_C12(&half_size);
-    calc_C21(&half_size);
-    calc_C22(&half_size);
+    pthread_create(&c_mat_ids[0], NULL, calc_C11, &half_size);
+    pthread_create(&c_mat_ids[1], NULL, calc_C12, &half_size);
+    pthread_create(&c_mat_ids[2], NULL, calc_C21, &half_size);
+    pthread_create(&c_mat_ids[3], NULL, calc_C22, &half_size);
+    
+    /* Barrier for C matrices calculation */  
+    while (c_thread_counter < C_MAT_COUNT); 
     
     /* Add barrier for previous threads */ 
     recombine_matrices(C_11, C_12, C_21, C_22, &C, N, new_size);
