@@ -39,9 +39,9 @@ void *calc_M5(void *dim);
 void *calc_M6(void *dim);
 void *calc_M7(void *dim);
 
-void calc_C11(void *M_1, void *M_4, void *M_5, void *M_7, void *D, void *dim);
-void calc_C12(void *M_3, void *M_5, void *D, void *dim);
-void calc_C21(void *M_2, void *M_4, void *D, void *dim);
-void calc_C22(void *M_1, void *M_2, void *M_3, void *M_6, void *D, void *dim);
+void *calc_C11(void *dim);
+void *calc_C12(void *dim);
+void *calc_C21(void *dim);
+void *calc_C22(void *dim);
 
 

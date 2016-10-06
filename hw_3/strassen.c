@@ -381,27 +381,28 @@ void *calc_M7(void *dim)
     m_thread_counter++;
 }
 
-void calc_C11(void *M_1, void *M_4, void *M_5, void *M_7, void *D, void *dim)
+void *calc_C11(void *dim)
 {
-    matrix_add(M_1, M_4, D, dim);
-    matrix_sub(*(int ***)D, M_5, D, dim);
-    matrix_add(*(int ***)D, M_7, D, dim);    
+    matrix_add(M_1, M_4, &C_11, dim);
+    matrix_sub(C_11, M_5, &C_11, dim);
+    matrix_add(C_11, M_7, &C_11, dim);    
 }
 
-void calc_C12(void *M_3, void *M_5, void *D, void *dim)
+void *calc_C12(void *dim)
 {
-    matrix_add(M_3, M_5, D, dim);    
-}
-void calc_C21(void *M_2, void *M_4, void *D, void *dim)
-{
-    matrix_add(M_2, M_4, D, dim);    
+    matrix_add(M_3, M_5, &C_12, dim);    
 }
 
-void calc_C22(void *M_1, void *M_2, void *M_3, void *M_6, void *D, void *dim)
+void *calc_C21(void *dim)
 {
-    matrix_sub(M_1, M_2, D, dim);
-    matrix_add(*(int ***)D, M_3, D, dim);
-    matrix_add(*(int ***)D, M_6, D, dim);    
+    matrix_add(M_2, M_4, &C_21, dim);    
+}
+
+void *calc_C22(void *dim)
+{
+    matrix_sub(M_1, M_2, &C_22, dim);
+    matrix_add(C_22, M_3, &C_22, dim);
+    matrix_add(C_22, M_6, &C_22, dim);    
 }
 
 // WRITE YOUR CODE HERE, you will need to also add functions for each
@@ -464,10 +465,10 @@ void strassenMM(int N) {
     while (m_thread_counter < M_MAT_COUNT - 1);
 
     /* Add Barrier for previous threads */ 
-    calc_C11(M_1, M_4, M_5, M_7, &C_11, &half_size);
-    calc_C12(M_3, M_5, &C_12, &half_size);
-    calc_C21(M_2, M_4, &C_21, &half_size);
-    calc_C22(M_1, M_2, M_3, M_6, &C_22, &half_size);
+    calc_C11(&half_size);
+    calc_C12(&half_size);
+    calc_C21(&half_size);
+    calc_C22(&half_size);
     
     /* Add barrier for previous threads */ 
     recombine_matrices(C_11, C_12, C_21, C_22, &C, N, new_size);
