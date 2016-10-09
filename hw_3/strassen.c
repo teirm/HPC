@@ -95,16 +95,12 @@ void padded_split(int **M, int N, int padded_size, int m_pos)
         for (i = 0; i < N; i++) {
             for (j = 0; j < N; j++) {
                 if (i < padded_size/2 && j < padded_size/2) {
-//                    printf("%d %d\n", i, j);
                     A_11[i][j] = M[i][j];
                 } else if (i >= padded_size/2 && j < padded_size/2) {
-//                    printf("%d %d\n", i - padded_size/2, j);
                     A_21[i - padded_size/2][j] = M[i][j];
                 } else if (i < padded_size/2 && j >= padded_size/2) {
-//                    printf("%d %d\n", i, j - padded_size/2);
                     A_12[i][j - padded_size/2] = M[i][j];
                 } else { 
-//                    printf("%d %d\n", i - padded_size/2, j - padded_size/2);
                     A_22[i - padded_size/2][j - padded_size/2] = M[i][j];
                 }
             }
@@ -118,16 +114,12 @@ void padded_split(int **M, int N, int padded_size, int m_pos)
         for (i = 0; i < N; i++) {
             for (j = 0; j < N; j++) {
                 if (i < padded_size/2 && j < padded_size/2) {
-//                    printf("%d %d\n", i, j);
                     B_11[i][j] = M[i][j];
                 } else if (i >= padded_size/2 && j < padded_size/2) {
-//                    printf("%d %d\n", i - padded_size/2, j);
                     B_21[i - padded_size/2][j] = M[i][j];
                 } else if (i < padded_size/2 && j >= padded_size/2) {
-//                    printf("%d %d\n", i, j - padded_size/2);
                     B_12[i][j - padded_size/2] = M[i][j];
                 } else { 
-//                    printf("%d %d\n", i - padded_size/2, j - padded_size/2);
                     B_22[i - padded_size/2][j - padded_size/2] = M[i][j];
                 }
             }
@@ -245,21 +237,16 @@ void recombine_matrices(int **C_11, int **C_12, int **C_21, int **C_22, int ***D
     int i;
     int j;
 
-    printf("Going to recombine matrices\n");
 
     for (i = 0; i < old_dim; i++) {
         for (j = 0; j < old_dim; j++) {
             if (i < new_dim/2 && j < new_dim/2) { 
-//                printf("Adding C_11 at %d %d\n", i,j);
                 (*D)[i][j] = C_11[i][j];
             } else if (i >= new_dim/2 && j < new_dim/2) {
-//                printf("Adding C_21 at %d %d\n", i-new_dim/2,j);
                 (*D)[i][j] = C_21[i-new_dim/2][j];
             } else if (i < new_dim/2 && j >= new_dim/2) {
-//                printf("Adding C_12 at %d %d\n", i,j-new_dim/2);
                 (*D)[i][j] = C_12[i][j-new_dim/2];
             } else {
-//                printf("Adding C_22 at %d %d\n", i-new_dim/2,j-new_dim/2);
                 (*D)[i][j] = C_22[i-new_dim/2][j-new_dim/2];
             }
         }
@@ -428,11 +415,6 @@ void strassenMM(int N) {
     new_size = N;
     half_size = 0;
 
-/* 
-    m_thread_counter = 0;
-    c_thread_counter = 0; 
-*/   
-
     if (is_power_two(N) == 0) {
         new_size = compute_next_power_two(N);
     } 
@@ -467,7 +449,6 @@ void strassenMM(int N) {
     /* Add barrier for previous threads */ 
     recombine_matrices(C_11, C_12, C_21, C_22, &C, N, new_size);
 
-    printMatrix(C, N);
     
     strassen_deallocate(&half_size);
 }
