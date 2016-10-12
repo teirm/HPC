@@ -1,0 +1,33 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{listings}
+
+\begin{document}
+\title{Homework 2}
+\author{Cyrus Ramavarapu}
+\renewcommand{\today}{29 September 2016}
+\maketitle
+
+\section*{Problem 1:}
+\subsection*{a}
+There is a loop dependence because each iteration is dependent
+on the previous interation.  This occurs in the following line
+of code:\\
+\[
+a[i]=a[i-1]+i
+\]
+\subsection*{b}
+It is very difficult to remove this loop dependence; however,
+since the first line in the loop is only taking the sum of
+the first $i$ numbers, the loop can be rewritten as follows:\\
+\begin{lstlisting}
+a[0] = 0;
+b[0] = 0;
+for (i = 0; i < 10; i++) {
+    a[i] = i*(i+1)/2;
+    b[i] = a[i];
+}
+\end{lstlisting}
+This loop is parallelizable since the dependence has been removed. 
+\end{document}
