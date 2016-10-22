@@ -64,8 +64,20 @@ void sort_row(int ***M, int row_num, int size)
     }
 }
 
+void sort_col(int ***M, int col_num, int size)
+{
+    vector<int> col_vector;
 
+    for (int i = 0; i < size; i++) {
+        col_vector.push_back((*M)[i][col_num]);
+    }
+    
+    sort(col_vector.begin(), col_vector.end());
 
+    for (int i = 0; i < size; i++) {
+        (*M)[i][col_num] = col_vector[i];
+    }
+} 
 
 // Allocate square matrix.
 int **allocMatrix(int size) {
