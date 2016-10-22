@@ -11,11 +11,61 @@
 #include "timer.h"
 #include "io.h"
 
+#include <algorithm>
+#include <vector>
+#include <iostream>
+
 #define MAX_VALUE 10000
 
+using namespace std;
+
 void shear_sort(int **A, int M) {
-  // Students: Implement parallel shear sort here.
+
+    vector<int> row_vector;
+    vector<int> col_vector;
+
+    for (int i = 0; i < M; i++) {
+        row_vector.push_back(A[0][i]);
+        col_vector.push_back(A[i][0]);
+    }
+
+    printf("Row\tCol\n");
+    for (int i = 0; i < M; i ++) {
+        cout << row_vector[i] << "\t";
+        cout << col_vector[i] << endl;
+    }
+
+    sort(row_vector.begin(), row_vector.end(), greater<int>());
+    sort(col_vector.begin(), col_vector.end(), greater<int>());
+
+    printf("Sorted Row\tCol\n");
+    for (int i = 0; i < M; i ++) {
+        cout << row_vector[i] << "\t";
+        cout << col_vector[i] << endl;
+    }
 }
+
+void sort_row(int ***M, int row_num, int size)
+{
+    vector<int> row_vector;
+    
+    for (int i = 0; i < size; i++) {
+        row_vector.push_back((*M)[row_num][i]);
+    }
+
+    if (row_num % 2 == 0) {
+        sort(row_vector.begin(), row_vector.end());
+    } else {
+        sort(row_vector.begin(), row_vector.end(), greater<int>());
+    }
+
+    for (int i = 0; i < size; i++) {
+        (*M)[row_num][i] = row_vector[i];
+    }
+}
+
+
+
 
 // Allocate square matrix.
 int **allocMatrix(int size) {
@@ -86,10 +136,11 @@ int main(int argc, char* argv[]) {
   elapsedTime = timerStop();
 
   // print if reasonably small
+/*
   if (M <= 10) {
     printMatrix(A,M);
   }
-
+*/
   printf("Took %ld ms\n", timerStop());
 
   // releasing memory
