@@ -10,3 +10,4 @@ void conway(int **World, int N, int M);
 int **allocMatrix(int size);
 
 void matrix_free(int ***M, int dim);
+void copy_matrix(int ***S, int ***D, int size);

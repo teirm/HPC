@@ -14,6 +14,17 @@
 // Function implementing Conway's Game of Life
 void conway(int **World, int N, int M){
   // STUDENT: IMPLEMENT THE GAME HERE, make it parallel!
+    int **old_world;
+    
+    old_world = allocMatrix(N);            
+
+    copy_matrix(&World, &old_world, N);        
+    
+    printf("World:\n");
+    printMatrix(World, N);
+   
+    printf("\n\nOld_World:\n");
+    printMatrix(old_world, N);
 }
 
 // Allocate square matrix.
@@ -31,6 +42,7 @@ int **allocMatrix(int size) {
   return matrix;
 }
 
+
 void matrix_free(int ***M, int dim)
 {
     int i;
@@ -40,6 +52,15 @@ void matrix_free(int ***M, int dim)
     }
 
     free(*M);
+}
+
+void copy_matrix(int ***S, int ***D, int size)
+{
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            (*D)[i][j] = (*S)[i][j];
+        }
+    }
 }
 
 // Main method      
