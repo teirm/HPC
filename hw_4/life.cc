@@ -11,13 +11,14 @@
 #include "io.h"
 #include "life.h"
 
+#define TOTAL_NEIGHBORS 8
+
 // Function implementing Conway's Game of Life
 void conway(int **World, int N, int M){
   // STUDENT: IMPLEMENT THE GAME HERE, make it parallel!
     int **old_world;
-    
-    old_world = allocMatrix(N);            
 
+    old_world = allocMatrix(N);            
     copy_matrix(&World, &old_world, N);        
     
     printf("World:\n");
@@ -25,7 +26,98 @@ void conway(int **World, int N, int M){
    
     printf("\n\nOld_World:\n");
     printMatrix(old_world, N);
+
+    /* Outerloop to evolve system */
+    for (int gen = 0; gen < M; gen++) {
+        /* Innerloop to scan and check system */
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                World[i][j] = process_cell(i,j,N,old_world);  
+            }
+        }
+    }
 }
+
+int process_cell(int x_pos, int y_pos, int size, int **world)
+{
+    int current_cell; 
+     
+    int left_neighbor;
+    int right_neighbor;
+    int top_neighbor;
+    int bottom_neighbor;
+   
+    int top_left_neighbor;
+    int top_right_neighbor;    
+    int bottom_left_neighbor;
+    int bottom_right_neighbor; 
+
+    int live_neighbors;
+    int dead_neighbors;
+ 
+    left_neighbor = 0;
+    right_neighbor = 0;
+    top_neighbor = 0;
+    bottom_neighbor = 0; 
+  
+    top_left_neighbor = 0;
+    top_right_neighbor = 0;
+    bottom_right_neighbor = 0;
+    bottom_left_neighbor = 0;  
+ 
+    current_cell = world[x_pos][y_pos]; 
+    
+    live_neighbors = 0;
+    dead_neighbors = 0; 
+ 
+    if (x_pos - 1 >= 0) {
+        right_neighbor = world[x_pos - 1][y_pos];
+        
+        if (y_pos - 1 >= 0) {
+            top_neighbor = world[x_pos][y_pos-1]; 
+            top_right_neighbor = world[x_pos-1][y_pos-1];
+        }
+    
+        if (y_pos + 1 <= 0) {
+            bottom_neighbor = world[x_pos][y_pos+1];
+            bottom_right_neighbor = world[x_pos-1][y_pos+1];
+        }
+    }
+
+    if (x_pos + 1 <= size) {
+        left_neighbor = world[x_pos+1][y_pos];
+        
+        if (y_pos - 1 >= 0) {
+            top_right_neighbor = world[x_pos-1][y_pos-1];
+        }
+    
+        if (y_pos + 1 <= 0) {
+            bottom_right_neighbor = world[x_pos-1][y_pos+1];
+        }
+    }
+    
+    live_neighbors = right_neighbor + left_neighbor +\
+                     top_neighbor + bottom_neighbor +\
+                     top_right_neighbor + top_left_neighbor +\
+                     bottom_right_neighbor + bottom_left_neighbor;
+   
+    dead_neighbors = TOTAL_NEIGHBORS - live_neighbors; 
+
+    if (current_cell == 1) {
+        if (live_neighbors < 2 || live_neighbors > 3) {
+            current_cell = 0;
+        } else {
+            current_cell = 1;
+        }
+    } else {
+        if (live_neighbors == 3) {
+            current_cell = 1;
+        }
+    }
+
+    return current_cell;
+}
+
 
 // Allocate square matrix.
 int **allocMatrix(int size) {
