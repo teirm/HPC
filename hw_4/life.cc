@@ -7,11 +7,14 @@
  * Implement openmp verions of conway's game of life.
  */
 
+#include <iostream>
 #include "timer.h"
 #include "io.h"
 #include "life.h"
 
 #define TOTAL_NEIGHBORS 8
+
+using namespace std;
 
 // Function implementing Conway's Game of Life
 void conway(int **World, int N, int M){
@@ -27,14 +30,22 @@ void conway(int **World, int N, int M){
     printf("\n\nOld_World:\n");
     printMatrix(old_world, N);
 
+    cout << endl << "STARTING EVOLUTION" << endl;
+
     /* Outerloop to evolve system */
     for (int gen = 0; gen < M; gen++) {
         /* Innerloop to scan and check system */
+#       pragma omp parallel for num_threads(N)         
         for (int i = 0; i < N; i++) {
+#       pragma omp parallel for num_threads(N)
             for (int j = 0; j < N; j++) {
                 World[i][j] = process_cell(i,j,N,old_world);  
             }
         }
+       
+        copy_matrix(&World, &old_world, N);  
+        cout << "EVOVLED WORLD GENERATION: "  << gen << endl;
+        printMatrix(World, N); 
     }
 }
 
@@ -69,33 +80,47 @@ int process_cell(int x_pos, int y_pos, int size, int **world)
     
     live_neighbors = 0;
     dead_neighbors = 0; 
- 
+/*
+    printf("Current Position: [%d,%d]\n", x_pos, y_pos); 
+*/
     if (x_pos - 1 >= 0) {
         right_neighbor = world[x_pos - 1][y_pos];
-        
+         
         if (y_pos - 1 >= 0) {
-            top_neighbor = world[x_pos][y_pos-1]; 
             top_right_neighbor = world[x_pos-1][y_pos-1];
         }
     
-        if (y_pos + 1 <= 0) {
-            bottom_neighbor = world[x_pos][y_pos+1];
+        if (y_pos + 1 < size) {
             bottom_right_neighbor = world[x_pos-1][y_pos+1];
         }
+
     }
 
-    if (x_pos + 1 <= size) {
+    if (y_pos - 1 >= 0) {
+        top_neighbor = world[x_pos][y_pos-1]; 
+    }
+    
+    if (y_pos + 1 < size) {
+        bottom_neighbor = world[x_pos][y_pos+1];
+    }
+    
+    if (x_pos + 1 < size) {
         left_neighbor = world[x_pos+1][y_pos];
         
         if (y_pos - 1 >= 0) {
-            top_right_neighbor = world[x_pos-1][y_pos-1];
+            top_left_neighbor = world[x_pos+1][y_pos-1];
         }
     
-        if (y_pos + 1 <= 0) {
-            bottom_right_neighbor = world[x_pos-1][y_pos+1];
+        if (y_pos + 1 < size) {
+            bottom_left_neighbor = world[x_pos+1][y_pos+1];
         }
     }
-    
+/*   
+    printf("Top: %d\nBottom: %d\nRight: %d\nLeft:%d\n",\
+            top_neighbor, bottom_neighbor, right_neighbor, left_neighbor);
+    printf("Top Left: %d\nBottom Left: %d\nTop Right: %d\nBottom Right:%d\n",\
+            top_left_neighbor, bottom_left_neighbor, top_right_neighbor, bottom_right_neighbor);
+*/   
     live_neighbors = right_neighbor + left_neighbor +\
                      top_neighbor + bottom_neighbor +\
                      top_right_neighbor + top_left_neighbor +\
@@ -114,7 +139,10 @@ int process_cell(int x_pos, int y_pos, int size, int **world)
             current_cell = 1;
         }
     }
-
+/*
+    printf("Dead Neighbors: %d\nLive Neighbors:%d\nResult: %d\n\n",\
+            dead_neighbors, live_neighbors, current_cell); 
+*/
     return current_cell;
 }
 
@@ -148,7 +176,9 @@ void matrix_free(int ***M, int dim)
 
 void copy_matrix(int ***S, int ***D, int size)
 {
+#   pragma omp parallel for num_threads(size)  
     for (int i = 0; i < size; i++) {
+#   pragma omp parallel for num_threads(size)
         for (int j = 0; j < size; j++) {
             (*D)[i][j] = (*S)[i][j];
         }
@@ -194,7 +224,7 @@ int main(int argc, char* argv[]) {
   // stopping timer
   elapsedTime = timerStop();
 
-  printMatrix(World,N);
+//  printMatrix(World,N);
 
   printf("Took %ld ms\n", timerStop());
 
