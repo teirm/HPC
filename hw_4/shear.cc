@@ -10,6 +10,7 @@
 #include <math.h>
 #include "timer.h"
 #include "io.h"
+#include "shear.h"
 
 #include <algorithm>
 #include <vector>
@@ -21,27 +22,21 @@ using namespace std;
 
 void shear_sort(int **A, int M) {
 
-    vector<int> row_vector;
-    vector<int> col_vector;
+    int shear_iterations;
 
-    for (int i = 0; i < M; i++) {
-        row_vector.push_back(A[0][i]);
-        col_vector.push_back(A[i][0]);
-    }
+    shear_iterations = log2(M*M);
 
-    printf("Row\tCol\n");
-    for (int i = 0; i < M; i ++) {
-        cout << row_vector[i] << "\t";
-        cout << col_vector[i] << endl;
-    }
+    for (int i = 0; i < shear_iterations; i++) {
+        
+#       pragma omp parallel for num_threads(M) 
+        for (int j = 0; j < M; j++) {
+            sort_row(&A, j, M);
+        }
 
-    sort(row_vector.begin(), row_vector.end(), greater<int>());
-    sort(col_vector.begin(), col_vector.end(), greater<int>());
-
-    printf("Sorted Row\tCol\n");
-    for (int i = 0; i < M; i ++) {
-        cout << row_vector[i] << "\t";
-        cout << col_vector[i] << endl;
+#       pragma omp parallel for num_threads(M) 
+        for (int k = 0; k < M; k++) {
+            sort_col(&A, k, M);
+        }
     }
 }
 
@@ -59,6 +54,7 @@ void sort_row(int ***M, int row_num, int size)
         sort(row_vector.begin(), row_vector.end(), greater<int>());
     }
 
+#       pragma omp parallel for num_threads(size) 
     for (int i = 0; i < size; i++) {
         (*M)[row_num][i] = row_vector[i];
     }
@@ -71,9 +67,9 @@ void sort_col(int ***M, int col_num, int size)
     for (int i = 0; i < size; i++) {
         col_vector.push_back((*M)[i][col_num]);
     }
-    
     sort(col_vector.begin(), col_vector.end());
 
+#       pragma omp parallel for num_threads(size) 
     for (int i = 0; i < size; i++) {
         (*M)[i][col_num] = col_vector[i];
     }
@@ -148,11 +144,11 @@ int main(int argc, char* argv[]) {
   elapsedTime = timerStop();
 
   // print if reasonably small
-/*
+
   if (M <= 10) {
     printMatrix(A,M);
   }
-*/
+
   printf("Took %ld ms\n", timerStop());
 
   // releasing memory
