@@ -1,0 +1,39 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{listings}
+
+\begin{document}
+\title{Homework 4}
+\author{Cyrus Ramavarapu}
+\renewcommand{\today}{31 October 2016}
+\maketitle
+
+\section*{Problem 1:}
+The following table represents the cache state after
+each transaction (All processor caches are initially
+invalid):\\\\
+Legend:
+\begin{itemize}
+\item WM -- Write Miss
+\item WH -- Write Hit 
+\item RM -- Rread Miss
+\item MOD -- Modified
+\item WB -- Written Back
+\item SH -- Shared
+\item INV -- Inavlid
+\end{itemize} 
+\begin{flushleft}
+\begin{tabular}{c|ccc}
+Event & P1 & P2 & P3 \\ \hline
+P1 writes 30 to A (WM) & $ A = 30$ (MOD) & $L = INV$ & $L = INV$ \\ \hline
+P3 writes 2 to B (WM) & $ A = 30$ (MOD) & $L = INV$ & $ B = 2$ (MOD)\\ \hline
+P2 reads A (RM) & $ A = 30$ (A WB, SH) & $ A = 30$ (SH) & $ B = 2$ (MOD)\\ \hline
+P3 reads A (RM) & $A = 30$ (SH) & $ A = 30$ (SH) & $ A = 30$ (B WB, A SH)\\ \hline
+P3 writes 12 to A (WH) & $L = INV$ & $L=INV$ & $ A = 12$ (MOD)\\ \hline
+P2 reads A (RM) & $INV$ & $ A = 12$ (SH) & $A = 12$ (A WB, SH)\\ \hline
+P1 reads B (RW) & $B=3$ (MOD) & $A = 12$ (SH) &  $A = 12$ (SH) \\ \hline
+ 
+\end{tabular}
+\end{flushleft}
+\end{document}
