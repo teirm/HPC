@@ -134,7 +134,26 @@ int main(int argc, char** argv){
     // might consider asyncronous send/recv.
 
     // YOUR CODE GOES HERE (distributing particles among processors)
+  
+    if (myRank == 0) {
+        MPI_Scatter(globals,
+                    number * (sizeof (struct Particle)) / sizeof(float),
+                    MPI_FLOAT,
+                    locals,
+                    number * (sizeof (struct Particle)) / sizeof(float),
+                    MPI_FLOAT,
+                    0, MPI_COMM_WORLD);
+    } else {
+        MPI_Scatter(globals,
+                    number * (sizeof (struct Particle)) / sizeof(float),
+                    MPI_FLOAT,
+                    locals,
+                    number * (sizeof (struct Particle)) / sizeof(float),
+                    MPI_FLOAT,
+                    0, MPI_COMM_WORLD);
     
+       printf("Locals in proc %d: %f\n", myRank, locals[0].x);  
+    }
   } else {
     // random initialization of local particle array
     for(j = 0; j < number; j++){
