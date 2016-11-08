@@ -1,7 +1,7 @@
 all: particles particles_serial
 
 particles: particles.c
-	mpicc -std=c99  -o particles particles.c
+	mpicc -std=c99  -o particles particles.c -lm
 
 particles_serial: particles_serial.c
 	g++ -o particles_serial particles_serial.c

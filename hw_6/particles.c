@@ -39,9 +39,12 @@ void interact(struct Particle *source, struct Particle *destination);
 void compute_interaction(struct Particle *source, struct Particle *destination, int limit);
 void compute_self_interaction(struct Particle *set, int size);
 void merge(struct Particle *first, struct Particle *second, int limit);
+int read_file(struct Particle *set, int size, char *file_name);
 
 // Main function
 int main(int argc, char** argv){
+ 
+  
   int myRank;// Rank of process
   int p;// Number of processes
   int n;// Number of total particles
@@ -56,6 +59,18 @@ int main(int argc, char** argv){
   MPI_Status status;// Return status for receive
   int j, rounds, initiator, sender;
   double start_time, end_time;
+
+  /* Variables Added by Cyrus */
+
+  int particle_counter; 
+  double x_pos;
+  double y_pos;
+  double inp_mass;
+
+  FILE *infp;
+
+  /***************************/
+
 
   // checking the number of parameters
   if(argc < 2){
@@ -85,13 +100,18 @@ int main(int argc, char** argv){
   locals = (struct Particle *) malloc(number * sizeof(struct Particle));
   remotes = (struct Particle *) malloc(number * sizeof(struct Particle));
 
+
   // checking for file information
   if(argc == 3){
     if(myRank == 0){
+
+
+      /* FILE READ IN */
       globals = (struct Particle *) malloc(n * sizeof(struct Particle));
-
-      // YOUR CODE GOES HERE (reading particles from file)
-
+     
+      file_name = argv[2]; 
+     
+      read_file(globals, n, file_name); 
     }
     
     // To send/recv (or scatter/gather) you will need to learn how to
