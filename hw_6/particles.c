@@ -60,18 +60,6 @@ int main(int argc, char** argv){
   int j, rounds, initiator, sender;
   double start_time, end_time;
 
-  /* Variables Added by Cyrus */
-
-  int particle_counter; 
-  double x_pos;
-  double y_pos;
-  double inp_mass;
-
-  FILE *infp;
-
-  /***************************/
-
-
   // checking the number of parameters
   if(argc < 2){
     printf("ERROR: Not enough parameters\n");
@@ -151,8 +139,6 @@ int main(int argc, char** argv){
                     number * (sizeof (struct Particle)) / sizeof(float),
                     MPI_FLOAT,
                     0, MPI_COMM_WORLD);
-    
-       printf("Locals in proc %d: %f\n", myRank, locals[0].x);  
     }
   } else {
     // random initialization of local particle array
@@ -169,8 +155,79 @@ int main(int argc, char** argv){
   if(myRank == 0){
     start_time = MPI_Wtime();
   }
-  
-  // YOUR CODE GOES HERE (ring algorithm)
+
+    next = (myRank + 1) % p;
+    
+    if (myRank - 1 < 0) {
+        previous = p - 1;
+    } else {
+        previous = myRank - 1;
+    }
+
+ 
+    // YOUR CODE GOES HERE (ring algorithm)
+        MPI_Send(locals,
+                 number * (sizeof (struct Particle)) / sizeof(float),
+                 MPI_FLOAT,
+                 next,
+                 tag,
+                 MPI_COMM_WORLD);
+       MPI_Recv(remotes,
+                 number * (sizeof (struct Particle)) / sizeof(float),
+                 MPI_FLOAT,
+                 previous,
+                 tag,
+                 MPI_COMM_WORLD,
+                 &status); 
+      
+       compute_interaction(locals, remotes, number);
+       
+       for (int i = 1; i < (p-1)/2; i++) {
+            MPI_Send(remotes,
+                     number * (sizeof (struct Particle)) / sizeof(float),
+                     MPI_FLOAT,
+                     next,
+                     tag,
+                     MPI_COMM_WORLD);
+           MPI_Recv(remotes,
+                    number * (sizeof (struct Particle)) / sizeof(float),
+                    MPI_FLOAT,
+                    previous,
+                    tag,
+                    MPI_COMM_WORLD,
+                    &status); 
+           
+           compute_interaction(locals, remotes, number);
+       }
+
+       if (myRank - ((p-1)/2) < 0) {
+           next = myRank + 1 + (p-1)/2;
+       } else {
+           next = myRank - (p-1)/2;
+       }
+
+       previous = (myRank + (p-1)/2) % p; 
+
+
+        MPI_Send(remotes,
+                 number * (sizeof (struct Particle)) / sizeof(float),
+                 MPI_FLOAT,
+                 next, 
+                 0,
+                 MPI_COMM_WORLD);
+        MPI_Recv(remotes,
+                number * (sizeof (struct Particle)) / sizeof(float),
+                MPI_FLOAT,
+                previous,
+                0,
+                MPI_COMM_WORLD,
+                &status); 
+        
+        
+        merge(locals, remotes, number);
+        compute_self_interaction(locals, number);  
+         
+       
 
   // stopping timer
   if(myRank == 0){
@@ -180,11 +237,27 @@ int main(int argc, char** argv){
   
   // printing information on particles
   if(argc == 3){
-    
-    // YOUR CODE GOES HERE (collect particles at rank 0)
+   
 
     if(myRank == 0) {
+        MPI_Gather(locals,
+                   number * (sizeof (struct Particle)) / sizeof(float),
+                   MPI_FLOAT,
+                   globals,
+                   number * (sizeof (struct Particle)) / sizeof(float),
+                   MPI_FLOAT,
+                   0,
+                   MPI_COMM_WORLD); 
       print_particles(globals,n);
+    } else {
+        MPI_Gather(locals,
+                   number * (sizeof (struct Particle)) / sizeof(float),
+                   MPI_FLOAT,
+                   globals,
+                   number * (sizeof (struct Particle)) / sizeof(float),
+                   MPI_FLOAT,
+                   0,
+                   MPI_COMM_WORLD);
     }
   }
 
