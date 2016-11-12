@@ -1,0 +1,91 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{listings}
+
+\begin{document}
+\title{OpenMPI \textit{n-body} Simulation}
+\author{Cyrus Ramavarapu}
+\renewcommand{\today}{12 November 2016}
+\maketitle
+
+\section*{Intro:}
+A common scientific problem is to determine how a system
+containing \textit{n} interacting bodies will evolve over
+time.  Commonly referred to as the \textit{n-body} problem,
+it has found wide spread use in physics, chemistry, biology
+and even finance.  However, despite the importance of this
+problem, analytical solutions are impossible to achieve
+except for a few configurations where $N > 2$.  As a result,
+solutions are approximated through simulation where 
+interactions are modelled using parameterizable force-fields
+to provide the necessary flexibility to effectively capture
+real phenommena.\\\\
+To effectively perform these simulations at a sufficiently
+large scale and in a reasonable amount of time, parallel
+execution is often used to distribute the problem over
+large computer clusters.  One method to achieve this degree
+of massive parallelization is to use the a distributed
+memory API.  This report describes the use of one such API,
+OpenMPI, to perform a basic \textit{n-body} particle simulation.
+In addition to describing the parallelization strategy using
+OpenMPI, the efficiency of the implementation and speed up 
+observed in the simulation will be analyzed.
+\section*{Problem and Strategy:}
+A key aspect of any \textit{n-body} simulation is the choice
+of the force field which will define how the particles in the 
+simulation will interact.  For didactic reasons, a very basic
+\textit{van der Waals} force field was chosen using the following
+equations for all particle-particle interactions.
+\[
+f = \frac{A}{r^6} + \frac{B}{r^{12}}
+\]
+\[
+r = \sqrt{r_x^2 + r_y^2}
+\]
+\[
+r_x = x_1 - x_2
+\]
+\[
+r_y = y_1 - y_2
+\]
+\[
+f_x = \frac{f\times r_x}{r}
+\]
+\[
+f_y = \frac{f\times r_y}{r}
+\]
+Furthermore, the paramters $A$ and $B$ were given.\\\\
+When considering the different approaches to parallelize this
+problem using OpenMPI, it was assumed that the simulation
+will contain an arbitrary number of particles that will need
+to be distributed over an \textit{odd} number of processors.
+Given these assumptions an obvious choice to distribute the 
+particles over the processors was the \textit{MPI\_Scatter}
+command.  This command attempts to evenly distribute
+\textit{n} particles over $n$ processors.\\\\
+Once the particles were distributed over all the processors,
+the problem was then to determine an efficient way to
+calculate particle particle interactions.   It was initially
+realized that duplicating the particles on each processor into
+two sets, \textit{locals} and \textit{remotes}, would reduce
+the number of calculations required in half because remotes
+would only have to interact with half the local sets, whereas
+the locals would interact with the other half of the remotes.
+This approach was ammenable to a \textit{ring-algorithm}
+where each processor would send its \textit{remotes} to
+its neighboring processors in a circular manner.  This 
+continues for $(n-1)/2$ iterations, and then the \textit{remotes}
+are returned to the original processor.  To implement this algorithm,
+\textit{MPI\_Send} and \textit{MPI\_Recv} were heavily used to
+send the remote particles to the necessary processor.\\\\
+Once all the particles completed the necessary calculations on
+each processor, to collect all the particles and display results,
+the corresponding command to \textit{MPI\_Scatter}, \textit{MPI\_Gather}.
+This command gathers all the particles on a single processor
+and then displays the results. 
+\section*{Results and Discussion:}
+
+\section*{Conclusion}
+
+\end{document}
