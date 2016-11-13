@@ -2,6 +2,7 @@
 
 \usepackage{amsmath}
 \usepackage{listings}
+\usepackage{graphicx}
 
 \begin{document}
 \title{OpenMPI \textit{n-body} Simulation}
@@ -84,8 +85,71 @@ each processor, to collect all the particles and display results,
 the corresponding command to \textit{MPI\_Scatter}, \textit{MPI\_Gather}.
 This command gathers all the particles on a single processor
 and then displays the results. 
-\section*{Results and Discussion:}
+\newpage
+\section*{Results:}
+Upon completing the simulation for 500 particles (\textit{N=500})
+the following times were runtimes were observed for process counts
+of 3, 15, and 63.\\\\
+\begin{center}
+\begin{tabular}{llll}
+Processes & Run & Time (s)     & Avg. Time (s)            \\ \hline
+3    & 1   & 0.0019 &                \\ 
+& 2   & 0.0019 &                \\
+& 3   & 0.0019 & 0.0019 \\ \hline
+15   & 1   & 0.0126 &                \\
+& 2   & 0.0045 &                \\
+& 3   & 0.2898  & 0.1023   \\ \hline
+63   & 1   & 0.0860  &                \\
+& 2   & 0.0816 &                \\
+& 3   & 0.0652 & 0.0776 
+\end{tabular}
+\end{center}
 
-\section*{Conclusion}
+Given that the serial execution for this problem took 27.9050 s,
+the speed-up and efficiency were calculated for each of the different
+process counts using the following formulas.
+\[
+Speed Up = \frac{Time_{serial}}{Time_{parallel}}
+\]
+\[
+Efficiency = \frac{Speed Up}{processes}
+\]
+\begin{center}
+\begin{tabular}{lll}
+Processes & Speed Up    & Efficiency  \\ \hline
+3         & 14566.7236 & 4855.5745 \\ \hline
+15        & 272.6099 & 18.1739 \\ \hline
+63        & 359.3950 & 5.7046
+\end{tabular}
+\end{center}
+
+The trend in efficiency and speed up can be observed more clearly
+when displayed on semilog plots.
+
+\begin{center}
+\includegraphics[scale=0.5]{speed_up.png}
+\end{center}
+
+\begin{center}
+\includegraphics[scale=0.5]{efficiency.png}
+\end{center}
+
+\section*{Discussion:}
+Based upon the speedup and efficiency plots, it is observed that
+for the size of the system (\textit{N=500}) the greatest speed up
+is achieved using a small number of processes.  This is likely
+due to the overhead required to initialize the system for a larger
+number of processes.
+The effiiency results follow a similar trend, with the highest
+efficiency being observed for trial run with the fewest number
+of processes.\\\\
+Although, both the speed up and efficiency results appear to 
+support that this problem is best solved using few processes,
+this is quite likely the result of the system size.  Future 
+studies should consider how the system size impacts the
+speed up and efficiency.  Furthermore, it will also be interesting
+to explore the effect of forcefield on the parallelizability of 
+the problem. 
+
 
 \end{document}
